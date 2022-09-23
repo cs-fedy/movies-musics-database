@@ -9,27 +9,26 @@ def make_url(suffix: str) -> str:
 request_page = request()
 
 class SongsScraper:
+  def get_title_musics(self, title_name: str, is_movie: bool) -> List:
+    tunefind_search_url = make_url(f'/search/site?q={title_name}')
+    title_link = self.__get_title_link(tunefind_search_url, is_movie)
+
+    links = [title_link]
+    if not is_movie:
+      links = self.__get_tv_show_episodes_links(title_link)
+    
+    return [self.__get_episode_songs(episode) for episode in links]
+
   def __get_title_link(self, tunefind_search_link: str, is_movie: bool) -> str:
     tunefind_search_page_content = request_page(tunefind_search_link)
     soup = BeautifulSoup(tunefind_search_page_content, 'html.parser')
 
     title_row_element = soup.select_one('.tf-site-search .row')
     title_cols_elements = title_row_element.select('.col-md-8')
-    if is_movie:
-      title_element = title_cols_elements[-1]
-    else:
-      title_element = title_cols_elements[0]
-
+    title_element = title_cols_elements[-1] if is_movie else title_cols_elements[0]
     return make_url(title_element.select_one('a').attrs['href'])
 
-  def __get_season_episodes(self, season_link: str) -> List:
-    season_page_content = request_page(season_link)
-    soup = BeautifulSoup(season_page_content, 'html.parser')
-
-    seasons_episodes_elements = soup.select('ul li h3 a')
-    return [make_url(link_element.attrs['href']) for link_element in seasons_episodes_elements]
-
-  def __get_tv_show_episodes_links(self, title_link: str) -> List:
+  def __get_tv_show_episodes_links(self, title_link: str) -> List[str]:
     title_page_content = request_page(title_link)
     soup = BeautifulSoup(title_page_content, 'html.parser')
 
@@ -38,9 +37,15 @@ class SongsScraper:
 
     links = []
     for season_link in seasons_links:
-      episodes = self.__get_season_episodes(season_link)
-      links.extend(episodes)
+      links.extend(self.__get_season_episodes(season_link))
     return links
+
+  def __get_season_episodes(self, season_link: str) -> List:
+    season_page_content = request_page(season_link)
+    soup = BeautifulSoup(season_page_content, 'html.parser')
+
+    seasons_episodes_elements = soup.select('ul li h3 a')
+    return [make_url(link_element.attrs['href']) for link_element in seasons_episodes_elements]
 
   def __get_episode_songs(self, episode_link: str) -> List:
     episode_page_content = request_page(episode_link)
@@ -67,13 +72,3 @@ class SongsScraper:
       'artist': artist_element.text,
       'description': description_element.text,
     }
-
-  def get_title_musics(self, title_name: str, is_movie: bool) -> List:
-    tunefind_search_url = make_url(f'/search/site?q={title_name}')
-    title_link = self.__get_title_link(tunefind_search_url, is_movie)
-
-    links = [title_link]
-    if not is_movie:
-      links = self.__get_tv_show_episodes_links(title_link)
-    
-    return [self.__get_episode_songs(episode) for episode in links]

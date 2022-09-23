@@ -1,10 +1,8 @@
 from typing import Dict
 from bs4 import BeautifulSoup
 from request import request
-from songs import SongsScraper
 
 request_page = request()
-song_scraper = SongsScraper()
  
 
 class TitleScraper:
@@ -34,7 +32,5 @@ class TitleScraper:
       'title_cover': title_cover_details,
       'genres': [element.text for element in genres_element],
       'description': title_description_element.text,
-      'is_movie': not is_tv_show,
-      'is_tv_show': is_tv_show,
-      'songs': song_scraper.get_title_musics(title, is_movie=not is_tv_show)
+      'title_type': 'tv_show' if is_tv_show else 'movie',
     }
