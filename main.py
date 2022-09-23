@@ -47,3 +47,11 @@ def scrape_save_musics() -> None:
     songs = song_scraper.get_title_musics(name, is_movie=type == 'movie')
     with Song() as song:
       song.save_new_songs(name, songs)
+
+
+if __name__ == '__main__':
+  Title().connect()
+  Song().connect()
+  links = scrape_movies_links()
+  scrape_save_titles(links)
+  scrape_save_musics()

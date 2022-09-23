@@ -8,7 +8,7 @@ class DB(ABC):
     super().__init__()
     self.connection: sqlite3.Connection = None
 
-  def __enter__(self):
+  def connect(self):
     try:
       BASE_DIR = path.dirname(path.abspath(__file__)) 
       db_path = path.join(BASE_DIR, "sqlite.db")
@@ -16,9 +16,10 @@ class DB(ABC):
     except sqlite3.Error as error:
       print("Failed to read data from sqlite table", error)
       exit(1)
-
-    self._create_table()
     return self
+
+  def __enter__(self):
+    return self.connect()
 
   def __exit__(self, exc_type, exc_value, exc_tb):
     self.connection.close()
@@ -30,6 +31,7 @@ class DB(ABC):
 
 class Title(DB):
   def _create_table(self):
+    self.connect()
     CREATE_TABLE_SQL_QUERY = """
       CREATE TABLE title(
         name TEXT PRIMARY KEY,
@@ -69,6 +71,7 @@ class Title(DB):
 
 class Song(DB):
   def _create_table(self):
+    self.connect()
     CREATE_TABLE_SQL_QUERY = """
       CREATE TABLE song(
         title_name TEXT PRIMARY KEY,
